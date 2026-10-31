@@ -1,4 +1,4 @@
-export const USE_STUB = true; // set to false once the blocker is off
+export const USE_STUB = process.env.NEXT_PUBLIC_USE_STUB_DATA === "true"; // set to false once the blocker is off
 
 export type VideoInfo = {
   title: string;
