@@ -33,7 +33,7 @@ export default function Nav() {
   }
 
   return (
-    <nav className="flex items-center gap-4 border-b border-gray-400 px-8 py-3">
+    <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-gray-400 px-4 py-3 sm:px-8">
       <Link href="/" className="font-bold">
         YT Log
       </Link>
@@ -43,8 +43,11 @@ export default function Nav() {
       <div className="ml-auto flex items-center gap-3 text-sm">
         {email ? (
           <>
-            <Link href="/settings" className="text-gray-500">
+            <Link href="/settings" className="hidden text-gray-500 sm:inline">
               {email}
+            </Link>
+            <Link href="/settings" className="sm:hidden">
+              Settings
             </Link>
             <button type="button" onClick={handleSignOut} className="underline">
               Sign out
