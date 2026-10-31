@@ -22,7 +22,7 @@ export default function LogForm({ id }: { id: string }) {
         return;
       }
       setSignedIn(true);
-      const existing = await readLog(id);
+      const existing = await readLog(id, data.user.id);
       if (existing) {
         setRating(existing.rating);
         setReview(existing.review);

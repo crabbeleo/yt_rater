@@ -16,7 +16,7 @@ export default function DiaryPage() {
       const { data } = await createClient().auth.getUser();
       if (data.user) {
         setSignedIn(true);
-        setLogs(await readLogs());
+        setLogs(await readLogs(data.user.id));
       }
       setLoaded(true);
     }
