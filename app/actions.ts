@@ -97,3 +97,73 @@ export async function signIn(input: {
   if (error) return { error: error.message };
   return {};
 }
+
+// Looks the video up on the server and caches it (users can't write to `videos`)
+async function ensureVideo(videoId: string): Promise<string | null> {
+  const video = await getVideoInfo(videoId);
+  if (!video) return "Couldn't find that video.";
+
+  const { error } = await createAdminClient().from("videos").upsert({
+    id: videoId,
+    title: video.title,
+    channel_name: video.author,
+    fetched_at: new Date().toISOString(),
+  });
+  return error ? error.message : null;
+}
+
+export async function setFavourite(input: {
+  position: number;
+  videoId: string;
+}): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub;
+  if (!userId) return { error: "You need to sign in." };
+
+  if (
+    !Number.isInteger(input.position) ||
+    input.position < 1 ||
+    input.position > 5
+  ) {
+    return { error: "Invalid slot." };
+  }
+  if (!/^[A-Za-z0-9_-]{11}$/.test(input.videoId)) {
+    return { error: "Invalid video ID." };
+  }
+
+  const videoError = await ensureVideo(input.videoId);
+  if (videoError) return { error: videoError };
+
+  const { error } = await supabase
+    .from("favourites")
+    .upsert(
+      { user_id: userId, position: input.position, video_id: input.videoId },
+      { onConflict: "user_id,position" }
+    );
+  if (error) {
+    return {
+      error:
+        error.code === "23505"
+          ? "That video is already in your top 5."
+          : error.message,
+    };
+  }
+  return {};
+}
+
+export async function removeFavourite(
+  position: number
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub;
+  if (!userId) return { error: "You need to sign in." };
+
+  const { error } = await supabase
+    .from("favourites")
+    .delete()
+    .eq("user_id", userId)
+    .eq("position", position);
+  return error ? { error: error.message } : {};
+}

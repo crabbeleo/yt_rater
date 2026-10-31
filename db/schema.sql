@@ -108,3 +108,33 @@ grant all on public.logs to service_role;
 grant select on public.follows to anon, authenticated;
 grant insert, delete on public.follows to authenticated;
 grant all on public.follows to service_role;
+
+create table public.favourites (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  position smallint not null check (position between 1 and 5),
+  video_id text not null references public.videos(id),
+  primary key (user_id, position),
+  unique (user_id, video_id)
+);
+
+alter table public.favourites enable row level security;
+
+create policy "favourites are public"
+  on public.favourites for select using (true);
+
+create policy "users insert own favourites"
+  on public.favourites for insert
+  with check ((select auth.uid()) = user_id);
+
+create policy "users update own favourites"
+  on public.favourites for update
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+create policy "users delete own favourites"
+  on public.favourites for delete
+  using ((select auth.uid()) = user_id);
+
+grant select on public.favourites to anon, authenticated;
+grant insert, update, delete on public.favourites to authenticated;
+grant all on public.favourites to service_role;

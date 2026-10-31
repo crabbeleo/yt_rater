@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { USE_STUB } from "@/lib/video";
 import FollowButton from "@/components/FollowButton";
 import { connection } from "next/server";
+import Favourites, { type Slot } from "@/components/Favourites";
 
 export const instant = false;
 
@@ -26,7 +27,7 @@ export default async function ProfilePage({
     const { data: claimsData } = await supabase.auth.getClaims();
     const viewerId: string | undefined = claimsData?.claims?.sub;
 
-    const [logsRes, followersRes, followingRes, isFollowingRes] =
+    const [logsRes, followersRes, followingRes, isFollowingRes, favRes] =
         await Promise.all([
             supabase
                 .from("logs")
@@ -41,6 +42,10 @@ export default async function ProfilePage({
                 .from("follows")
                 .select("*", { count: "exact", head: true })
                 .eq("follower_id", profile.id),
+            supabase
+                .from("favourites")
+                .select("position, video_id, videos(title)")
+                .eq("user_id", profile.id),
             viewerId
                 ? supabase
                     .from("follows")
@@ -55,6 +60,17 @@ export default async function ProfilePage({
     const followers = followersRes.count ?? 0;
     const following = followingRes.count ?? 0;
     const isFollowing = Boolean(isFollowingRes.data);
+    const favRows = (favRes.data ?? []) as unknown as {
+        position: number;
+        video_id: string;
+        videos: { title: string } | null;
+    }[];
+    const slots: (Slot | null)[] = [1, 2, 3, 4, 5].map((pos) => {
+        const row = favRows.find((r) => r.position === pos);
+        return row
+            ? { videoId: row.video_id, title: row.videos?.title ?? "Unknown video" }
+            : null;
+    });
 
     return (
         <main className="mx-auto flex max-w-xl flex-col gap-4 p-8">
@@ -85,6 +101,9 @@ export default async function ProfilePage({
                     )}
                 </div>
             </header>
+            {(viewerId === profile.id || slots.some(Boolean)) && (
+                <Favourites slots={slots} isOwner={viewerId === profile.id} />
+            )}
 
             {logs.length === 0 && <p className="text-gray-500">Nothing logged yet.</p>}
 
