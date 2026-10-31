@@ -31,14 +31,26 @@ create table public.follows (
 );
 
 -- Create a profile automatically for each new sign-up
-create function public.handle_new_user()
+create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer set search_path = ''
 as $$
+declare
+  wanted text := lower(coalesce(new.raw_user_meta_data ->> 'username', ''));
+  fallback text := 'user_' || substr(replace(new.id::text, '-', ''), 1, 10);
 begin
-  insert into public.profiles (id, username)
-  values (new.id, 'user_' || substr(replace(new.id::text, '-', ''), 1, 10));
+  if wanted !~ '^[a-z0-9_]{3,20}$'
+     or exists (select 1 from public.profiles where username = wanted) then
+    wanted := fallback;
+  end if;
+
+  begin
+    insert into public.profiles (id, username) values (new.id, wanted);
+  exception when unique_violation then
+    insert into public.profiles (id, username) values (new.id, fallback);
+  end;
+
   return new;
 end;
 $$;
