@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // Pulls the 11-character video ID out of the common YouTube URL formats
 function getVideoId(url: string): string | null {
@@ -45,6 +46,7 @@ export default function Home() {
         </button>
       </form>
       {error && <p className="text-red-500">{error}</p>}
+      <Link href="/diary" className="text-gray-500 underline">View diary</Link>
     </main>
     
   );
