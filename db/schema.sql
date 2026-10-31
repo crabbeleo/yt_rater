@@ -150,3 +150,46 @@ grant all on public.follows to service_role;
 grant select on public.favourites to anon, authenticated;
 grant insert, update, delete on public.favourites to authenticated;
 grant all on public.favourites to service_role;
+
+create table public.comments (
+  id uuid primary key default gen_random_uuid(),
+  log_user_id uuid not null,
+  log_video_id text not null,
+  user_id uuid not null,
+  parent_id uuid,
+  body text not null check (char_length(body) between 1 and 1000),
+  created_at timestamptz not null default now(),
+  constraint comments_user_id_profiles_fkey
+    foreign key (user_id) references public.profiles(id) on delete cascade,
+  constraint comments_log_fkey
+    foreign key (log_user_id, log_video_id)
+    references public.logs(user_id, video_id) on delete cascade,
+  constraint comments_id_log_key unique (id, log_user_id, log_video_id),
+  -- A reply must belong to the same review as its parent
+  constraint comments_parent_fkey
+    foreign key (parent_id, log_user_id, log_video_id)
+    references public.comments(id, log_user_id, log_video_id) on delete cascade
+);
+
+create index comments_log_idx
+  on public.comments (log_user_id, log_video_id, created_at);
+
+alter table public.comments enable row level security;
+
+create policy "comments are public"
+  on public.comments for select using (true);
+
+create policy "users comment as themselves"
+  on public.comments for insert
+  with check ((select auth.uid()) = user_id);
+
+create policy "authors and review owners delete comments"
+  on public.comments for delete
+  using (
+    (select auth.uid()) = user_id
+    or (select auth.uid()) = log_user_id
+  );
+
+grant select on public.comments to anon, authenticated;
+grant insert, delete on public.comments to authenticated;
+grant all on public.comments to service_role;
