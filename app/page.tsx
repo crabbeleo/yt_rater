@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 // Pulls the 11-character video ID out of the common YouTube URL formats
-function getVideoId(url) {
+function getVideoId(url: string): string | null {
   const match = url.match(
     /(?:youtu\.be\/|v=|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/
   );
@@ -12,11 +12,11 @@ function getVideoId(url) {
 }
 
 export default function Home() {
-  const [link, setLink] = useState("");
-  const [error, setError] = useState("");
+  const [link, setLink] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const router = useRouter();
 
-  function handleSubmit(e) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const id = getVideoId(link);
     if (!id) {
@@ -46,5 +46,6 @@ export default function Home() {
       </form>
       {error && <p className="text-red-500">{error}</p>}
     </main>
+    
   );
 }

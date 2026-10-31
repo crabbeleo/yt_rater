@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import LogForm from "@/components/LogForm";
 
 type OEmbed = {
   title: string;
@@ -29,6 +30,7 @@ export default async function VideoPage({
       />
       <h1 className="text-2xl font-bold text-center">{video.title}</h1>
       <p className="text-gray-500">{video.author_name}</p>
+       <LogForm id={id} title={video.title} />
     </main>
   );
 }
