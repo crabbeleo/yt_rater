@@ -2,23 +2,34 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { readLogs, deleteLog, type Log } from "@/lib/logs";
 import { USE_STUB } from "@/lib/video";
 
 export default function DiaryPage() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [signedIn, setSignedIn] = useState<boolean>(false);
 
   useEffect(() => {
-    const all = Object.values(readLogs());
-    all.sort((a, b) => b.loggedAt.localeCompare(a.loggedAt));
-    setLogs(all);
-    setLoaded(true);
+    async function load() {
+      const { data } = await createClient().auth.getUser();
+      if (data.user) {
+        setSignedIn(true);
+        setLogs(await readLogs());
+      }
+      setLoaded(true);
+    }
+    load();
   }, []);
 
-  function handleDelete(id: string) {
+  async function handleDelete(id: string) {
     if (!window.confirm("Delete this log?")) return;
-    deleteLog(id);
+    const error = await deleteLog(id);
+    if (error) {
+      window.alert(error);
+      return;
+    }
     setLogs((prev) => prev.filter((log) => log.id !== id));
   }
 
@@ -26,7 +37,13 @@ export default function DiaryPage() {
     <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-4 p-8">
       <h1 className="text-3xl font-bold">Diary</h1>
 
-      {loaded && logs.length === 0 && (
+      {loaded && !signedIn && (
+        <Link href="/login" className="underline">
+          Sign in to see your diary
+        </Link>
+      )}
+
+      {loaded && signedIn && logs.length === 0 && (
         <p className="text-gray-500">Nothing logged yet.</p>
       )}
 

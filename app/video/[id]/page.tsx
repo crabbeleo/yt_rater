@@ -30,7 +30,7 @@ export default async function VideoPage({
       )}
       <h1 className="text-2xl font-bold text-center">{video.title}</h1>
       <p className="text-gray-500">{video.author}</p>
-      <LogForm id={id} title={video.title} />
+      <LogForm id={id} />
     </main>
   );
 }

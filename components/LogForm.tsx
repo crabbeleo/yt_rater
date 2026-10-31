@@ -1,32 +1,59 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { readLogs, saveLog } from "@/lib/logs";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { readLog } from "@/lib/logs";
+import { logVideo } from "@/app/actions";
 
-export default function LogForm({ id, title }: { id: string; title: string }) {
+export default function LogForm({ id }: { id: string }) {
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [rating, setRating] = useState<number>(0);
   const [review, setReview] = useState<string>("");
   const [saved, setSaved] = useState<boolean>(false);
+  const [busy, setBusy] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
-  // Load an existing log for this video, if you've logged it before
   useEffect(() => {
-    const existing = readLogs()[id];
-    if (existing) {
-      setRating(existing.rating);
-      setReview(existing.review);
-      setSaved(true);
+    async function load() {
+      const { data } = await createClient().auth.getUser();
+      if (!data.user) {
+        setSignedIn(false);
+        return;
+      }
+      setSignedIn(true);
+      const existing = await readLog(id);
+      if (existing) {
+        setRating(existing.rating);
+        setReview(existing.review);
+        setSaved(true);
+      }
     }
+    load();
   }, [id]);
 
-  function handleSave() {
-    saveLog({
-      id,
-      title,
-      rating,
-      review,
-      loggedAt: new Date().toISOString(),
-    });
-    setSaved(true);
+  async function handleSave() {
+    setBusy(true);
+    setError("");
+    const result = await logVideo({ videoId: id, rating, review });
+    setBusy(false);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setSaved(true);
+    }
+  }
+
+  if (signedIn === null) {
+    return <p className="text-gray-500">Loading…</p>;
+  }
+
+  if (!signedIn) {
+    return (
+      <Link href="/login" className="underline">
+        Sign in to log this video
+      </Link>
+    );
   }
 
   return (
@@ -59,11 +86,18 @@ export default function LogForm({ id, title }: { id: string; title: string }) {
       <button
         type="button"
         onClick={handleSave}
-        disabled={rating === 0}
+        disabled={rating === 0 || busy}
         className="rounded-lg bg-black px-4 py-2 text-white disabled:opacity-40"
       >
-        {saved ? "Logged ✓" : "Log it"}
+        {busy
+          ? "Saving…"
+          : rating === 0
+          ? "Pick a rating first"
+          : saved
+          ? "Logged ✓"
+          : "Log it"}
       </button>
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 }

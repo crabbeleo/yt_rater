@@ -1,3 +1,5 @@
+import { createClient } from "@/lib/supabase/client";
+
 export type Log = {
   id: string;
   title: string;
@@ -6,24 +8,43 @@ export type Log = {
   loggedAt: string;
 };
 
-const KEY = "logs";
-
-export function readLogs(): Record<string, Log> {
-  try {
-    return JSON.parse(localStorage.getItem(KEY) ?? "{}");
-  } catch {
-    return {};
-  }
+// The signed-in user's log for one video, or null
+export async function readLog(
+  videoId: string
+): Promise<{ rating: number; review: string } | null> {
+  const { data } = await createClient()
+    .from("logs")
+    .select("rating, review")
+    .eq("video_id", videoId)
+    .maybeSingle();
+  return data ?? null;
 }
 
-export function saveLog(log: Log): void {
-  const logs = readLogs();
-  logs[log.id] = log;
-  localStorage.setItem(KEY, JSON.stringify(logs));
+// All of the signed-in user's logs, newest first
+export async function readLogs(): Promise<Log[]> {
+  const { data, error } = await createClient()
+    .from("logs")
+    .select("video_id, rating, review, logged_at, videos(title)")
+    .order("logged_at", { ascending: false });
+  if (error || !data) return [];
+
+  return data.map((row) => {
+    const video = row.videos as unknown as { title: string } | null;
+    return {
+      id: row.video_id,
+      title: video?.title ?? "Unknown video",
+      rating: row.rating,
+      review: row.review,
+      loggedAt: row.logged_at,
+    };
+  });
 }
 
-export function deleteLog(id: string): void {
-  const logs = readLogs();
-  delete logs[id];
-  localStorage.setItem(KEY, JSON.stringify(logs));
+// Returns an error message, or null on success
+export async function deleteLog(videoId: string): Promise<string | null> {
+  const { error } = await createClient()
+    .from("logs")
+    .delete()
+    .eq("video_id", videoId);
+  return error ? error.message : null;
 }
