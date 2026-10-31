@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { readLog } from "@/lib/logs";
 import { logVideo } from "@/app/actions";
+import { useRouter } from "next/navigation";
 
 export default function LogForm({ id }: { id: string }) {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -13,6 +14,7 @@ export default function LogForm({ id }: { id: string }) {
   const [saved, setSaved] = useState<boolean>(false);
   const [busy, setBusy] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const router = useRouter();
 
   useEffect(() => {
     async function load() {
@@ -41,6 +43,7 @@ export default function LogForm({ id }: { id: string }) {
       setError(result.error);
     } else {
       setSaved(true);
+      router.refresh();
     }
   }
 
@@ -92,10 +95,10 @@ export default function LogForm({ id }: { id: string }) {
         {busy
           ? "Saving…"
           : rating === 0
-          ? "Pick a rating first"
-          : saved
-          ? "Logged ✓"
-          : "Log it"}
+            ? "Pick a rating first"
+            : saved
+              ? "Logged ✓"
+              : "Log it"}
       </button>
       {error && <p className="text-red-500">{error}</p>}
     </div>
