@@ -6,13 +6,13 @@ export default function PrivacyPage() {
       <h2 className="text-xl font-bold">What we store</h2>
       <p>
         Your email address and a hashed (unreadable) password, so you can sign
-        in. Your username, optional display name, the videos you log with
+        in. Your username, the videos you log with
         your ratings and reviews, and who you follow.
       </p>
 
       <h2 className="text-xl font-bold">What is public</h2>
       <p>
-        Your username, display name, logs, ratings, reviews and follows are
+        Your username, logs, ratings, reviews and follows are
         public: anyone can see them, including people who aren&apos;t signed
         in. Your email address is never shown to other users.
       </p>

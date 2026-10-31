@@ -5,6 +5,7 @@ import { USE_STUB } from "@/lib/video";
 import FollowButton from "@/components/FollowButton";
 import { connection } from "next/server";
 import Favourites, { type Slot } from "@/components/Favourites";
+import { escapeLike, isValidName } from "@/lib/username";
 
 export const instant = false;
 
@@ -13,14 +14,18 @@ export default async function ProfilePage({
 }: {
     params: Promise<{ username: string }>;
 }) {
-    const { username } = await params;
+    const { username: rawName } = await params;
+    let name = rawName;
+    try {
+        name = decodeURIComponent(rawName);
+    } catch { }
+    if (!isValidName(name)) notFound();
     await connection();
     const supabase = await createClient();
 
     const { data: profile } = await supabase
         .from("profiles")
-        .select("id, username, display_name")
-        .eq("username", username.toLowerCase())
+        .select("id, username")
         .maybeSingle();
     if (!profile) notFound();
 
@@ -76,7 +81,7 @@ export default async function ProfilePage({
         <main className="mx-auto flex max-w-xl flex-col gap-4 p-8">
             <header className="flex flex-col gap-1">
                 <h1 className="text-3xl font-bold">
-                    {profile.display_name ?? profile.username}
+                    {profile.username}
                 </h1>
                 <p className="text-muted">@{profile.username}</p>
                 <p className="text-sm text-muted">

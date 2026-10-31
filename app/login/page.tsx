@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { signIn } from "@/app/actions";
+import { cleanName, isValidName, escapeLike, NAME_RULES } from "@/lib/username";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -30,9 +31,9 @@ export default function LoginPage() {
 
   async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const name = username.trim().toLowerCase();
-    if (!/^[a-z0-9_]{3,20}$/.test(name)) {
-      setMessage("Usernames are 3–20 characters: letters, numbers, underscores.");
+    const name = cleanName(username);
+    if (!isValidName(name)) {
+      setMessage(`Usernames are ${NAME_RULES}.`);
       return;
     }
 
@@ -43,11 +44,11 @@ export default function LoginPage() {
     const { data: taken } = await supabase
       .from("profiles")
       .select("id")
-      .eq("username", name)
+      .ilike("username", escapeLike(name))
       .maybeSingle();
     if (taken) {
       setBusy(false);
-      setMessage("That username is taken.");
+      setMessage("That name is taken.");
       return;
     }
 
@@ -84,7 +85,6 @@ export default function LoginPage() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             placeholder="Email or username"
-            autoCapitalize="none"
             required
             className={inputClass}
           />

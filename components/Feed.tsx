@@ -12,7 +12,7 @@ type FeedRow = {
     review: string;
     logged_at: string;
     videos: { title: string } | null;
-    profiles: { username: string; display_name: string | null } | null;
+    profiles: { username: string; } | null;
 };
 
 export default async function Feed({ tab }: { tab?: Tab }) {
@@ -42,7 +42,7 @@ export default async function Feed({ tab }: { tab?: Tab }) {
         let query = supabase
             .from("logs")
             .select(
-                "user_id, video_id, rating, review, logged_at, videos(title), profiles(username, display_name)"
+                "user_id, video_id, rating, review, logged_at, videos(title), profiles(username)"
             )
             .order("logged_at", { ascending: false })
             .limit(30);
@@ -128,8 +128,8 @@ export default async function Feed({ tab }: { tab?: Tab }) {
                     <div className="flex min-w-0 flex-col gap-1">
                         <span className="text-sm text-muted">
                             {row.profiles ? (
-                                <Link href={`/u/${row.profiles.username}`} className="underline">
-                                    {row.profiles.display_name ?? row.profiles.username}
+                                <Link href={`/u/${encodeURIComponent(row.profiles.username)}`} className="underline">
+                                    {row.profiles.username}
                                 </Link>
                             ) : (
                                 "Someone"

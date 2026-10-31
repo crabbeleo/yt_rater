@@ -7,7 +7,7 @@ type Row = {
     rating: number;
     review: string;
     logged_at: string;
-    profiles: { username: string; display_name: string | null } | null;
+    profiles: { username: string; } | null;
 };
 
 export default async function VideoLogs({ videoId }: { videoId: string }) {
@@ -16,7 +16,7 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
 
     const { data, error } = await supabase
         .from("logs")
-        .select("user_id, rating, review, logged_at, profiles(username, display_name)")
+        .select("user_id, rating, review, logged_at, profiles(username)")
         .eq("video_id", videoId)
         .order("logged_at", { ascending: false });
 
@@ -49,8 +49,8 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
                 >
                     <div className="flex items-center gap-2 text-sm">
                         {row.profiles ? (
-                            <Link href={`/u/${row.profiles.username}`} className="underline">
-                                {row.profiles.display_name ?? row.profiles.username}
+                            <Link href={`/u/${encodeURIComponent(row.profiles.username)}`} className="underline">
+                                {row.profiles.username}
                             </Link>
                         ) : (
                             <span>Someone</span>

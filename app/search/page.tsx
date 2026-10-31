@@ -5,7 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { USE_STUB } from "@/lib/video";
 
-type Person = { username: string; display_name: string | null };
+type Person = { username: string; };
 type VideoResult = { id: string; title: string; channel_name: string | null };
 
 // In SQL patterns, % and _ are wildcards, so escape them
@@ -17,7 +17,7 @@ async function searchPeople(term: string): Promise<Person[]> {
   if (term.length < 2) return [];
   const { data, error } = await createClient()
     .from("profiles")
-    .select("username, display_name")
+    .select("username")
     .ilike("username", `%${escapeLike(term)}%`)
     .order("username")
     .limit(10);
@@ -118,7 +118,7 @@ export default function SearchPage() {
               className="flex flex-col rounded-lg border border-line px-4 py-3"
             >
               <span className="font-semibold">
-                {person.display_name ?? person.username}
+                {person.username}
               </span>
               <span className="text-sm text-muted">@{person.username}</span>
             </Link>

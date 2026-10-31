@@ -3,6 +3,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVideoInfo } from "@/lib/video";
+import { cleanName, escapeLike, isValidName } from "@/lib/username";
+
+// Looks the video up on the server and caches it (users can't write to `videos`)
+async function ensureVideo(videoId: string): Promise<string | null> {
+  const video = await getVideoInfo(videoId);
+  if (!video) return "Couldn't find that video.";
+
+  const { error } = await createAdminClient().from("videos").upsert({
+    id: videoId,
+    title: video.title,
+    channel_name: video.author,
+    fetched_at: new Date().toISOString(),
+  });
+  return error ? error.message : null;
+}
 
 export async function logVideo(input: {
   videoId: string;
@@ -26,17 +41,8 @@ export async function logVideo(input: {
   }
 
   // The server looks the video up itself instead of trusting the browser
-  const video = await getVideoInfo(input.videoId);
-  if (!video) return { error: "Couldn't find that video." };
-
-  const admin = createAdminClient();
-  const { error: videoError } = await admin.from("videos").upsert({
-    id: input.videoId,
-    title: video.title,
-    channel_name: video.author,
-    fetched_at: new Date().toISOString(),
-  });
-  if (videoError) return { error: videoError.message };
+  const videoError = await ensureVideo(input.videoId);
+  if (videoError) return { error: videoError };
 
   // Saved as the signed-in user, so RLS applies
   const { error } = await supabase.from("logs").upsert({
@@ -57,8 +63,8 @@ export async function deleteAccount(): Promise<{ error?: string }> {
   const userId = data?.claims?.sub;
   if (!userId) return { error: "You need to be signed in." };
 
-  // Deleting the auth user also deletes their profile, logs and follows
-  // (the foreign keys we set up use "on delete cascade")
+  // Deleting the auth user also deletes their profile, logs, favourites and
+  // follows (the foreign keys use "on delete cascade")
   const admin = createAdminClient();
   const { error } = await admin.auth.admin.deleteUser(userId);
   if (error) return { error: error.message };
@@ -74,13 +80,16 @@ export async function signIn(input: {
   const generic = "Invalid login credentials";
   let email = input.identifier.trim();
 
-  // No "@" means it's a username: look up the email on the server only
+  // No "@" means it's a name: look up the email on the server only
   if (!email.includes("@")) {
+    const name = cleanName(email);
+    if (!isValidName(name)) return { error: generic };
+
     const admin = createAdminClient();
     const { data: profile } = await admin
       .from("profiles")
       .select("id")
-      .eq("username", email.toLowerCase())
+      .ilike("username", escapeLike(name))
       .maybeSingle();
     if (!profile) return { error: generic };
 
@@ -96,20 +105,6 @@ export async function signIn(input: {
   });
   if (error) return { error: error.message };
   return {};
-}
-
-// Looks the video up on the server and caches it (users can't write to `videos`)
-async function ensureVideo(videoId: string): Promise<string | null> {
-  const video = await getVideoInfo(videoId);
-  if (!video) return "Couldn't find that video.";
-
-  const { error } = await createAdminClient().from("videos").upsert({
-    id: videoId,
-    title: video.title,
-    channel_name: video.author,
-    fetched_at: new Date().toISOString(),
-  });
-  return error ? error.message : null;
 }
 
 export async function setFavourite(input: {

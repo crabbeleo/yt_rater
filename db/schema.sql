@@ -1,10 +1,19 @@
 -- Tables
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  username text not null unique check (username ~ '^[a-z0-9_]{3,20}$'),
-  display_name text,
-  created_at timestamptz not null default now()
+  username text not null unique,
+  created_at timestamptz not null default now(),
+  constraint profiles_username_format check (
+    char_length(username) between 2 and 30
+    and username = btrim(username)
+    and username !~ '[[:cntrl:]]'
+    and username !~ '\s\s'
+  )
 );
+
+-- Names are unique ignoring case ("Leo" and "leo" are the same name)
+create unique index profiles_username_lower_idx
+  on public.profiles (lower(username));
 
 create table public.videos (
   id text primary key,
@@ -30,18 +39,31 @@ create table public.follows (
   check (follower_id <> following_id)
 );
 
+create table public.favourites (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  position smallint not null check (position between 1 and 5),
+  video_id text not null references public.videos(id),
+  primary key (user_id, position),
+  unique (user_id, video_id)
+);
+
 -- Create a profile automatically for each new sign-up
-create or replace function public.handle_new_user()
+create function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer set search_path = ''
 as $$
 declare
-  wanted text := lower(coalesce(new.raw_user_meta_data ->> 'username', ''));
+  wanted text := regexp_replace(
+    btrim(coalesce(new.raw_user_meta_data ->> 'username', '')), '\s+', ' ', 'g'
+  );
   fallback text := 'user_' || substr(replace(new.id::text, '-', ''), 1, 10);
 begin
-  if wanted !~ '^[a-z0-9_]{3,20}$'
-     or exists (select 1 from public.profiles where username = wanted) then
+  if char_length(wanted) not between 2 and 30
+     or wanted ~ '[[:cntrl:]]'
+     or exists (
+       select 1 from public.profiles where lower(username) = lower(wanted)
+     ) then
     wanted := fallback;
   end if;
 
@@ -64,6 +86,7 @@ alter table public.profiles enable row level security;
 alter table public.videos enable row level security;
 alter table public.logs enable row level security;
 alter table public.follows enable row level security;
+alter table public.favourites enable row level security;
 
 create policy "profiles are public"
   on public.profiles for select using (true);
@@ -93,9 +116,22 @@ create policy "users unfollow as themselves"
   on public.follows for delete
   using ((select auth.uid()) = follower_id);
 
+create policy "favourites are public"
+  on public.favourites for select using (true);
+create policy "users insert own favourites"
+  on public.favourites for insert
+  with check ((select auth.uid()) = user_id);
+create policy "users update own favourites"
+  on public.favourites for update
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+create policy "users delete own favourites"
+  on public.favourites for delete
+  using ((select auth.uid()) = user_id);
+
 -- Grants (tables aren't exposed to the API until granted)
 grant select on public.profiles to anon, authenticated;
-grant update (username, display_name) on public.profiles to authenticated;
+grant update (username) on public.profiles to authenticated;
 grant all on public.profiles to service_role;
 
 grant select on public.videos to anon, authenticated;
@@ -108,32 +144,6 @@ grant all on public.logs to service_role;
 grant select on public.follows to anon, authenticated;
 grant insert, delete on public.follows to authenticated;
 grant all on public.follows to service_role;
-
-create table public.favourites (
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  position smallint not null check (position between 1 and 5),
-  video_id text not null references public.videos(id),
-  primary key (user_id, position),
-  unique (user_id, video_id)
-);
-
-alter table public.favourites enable row level security;
-
-create policy "favourites are public"
-  on public.favourites for select using (true);
-
-create policy "users insert own favourites"
-  on public.favourites for insert
-  with check ((select auth.uid()) = user_id);
-
-create policy "users update own favourites"
-  on public.favourites for update
-  using ((select auth.uid()) = user_id)
-  with check ((select auth.uid()) = user_id);
-
-create policy "users delete own favourites"
-  on public.favourites for delete
-  using ((select auth.uid()) = user_id);
 
 grant select on public.favourites to anon, authenticated;
 grant insert, update, delete on public.favourites to authenticated;
