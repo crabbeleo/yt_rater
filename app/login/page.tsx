@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState<string>("");
@@ -83,6 +84,14 @@ export default function LoginPage() {
           Create account
         </button>
       </form>
+      <p className="text-xs text-gray-500">
+        By creating an account you agree that your username, logs and reviews are
+        public. See the{" "}
+        <Link href="/privacy" className="underline">
+          privacy page
+        </Link>
+        .
+      </p>
       {message && <p className="text-red-500">{message}</p>}
     </main>
   );

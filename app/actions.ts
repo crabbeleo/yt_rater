@@ -50,3 +50,19 @@ export async function logVideo(input: {
 
   return {};
 }
+
+export async function deleteAccount(): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub;
+  if (!userId) return { error: "You need to be signed in." };
+
+  // Deleting the auth user also deletes their profile, logs and follows
+  // (the foreign keys we set up use "on delete cascade")
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.deleteUser(userId);
+  if (error) return { error: error.message };
+
+  await supabase.auth.signOut();
+  return {};
+}

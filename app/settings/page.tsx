@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import DeleteAccount from "@/components/DeleteAccount";
 
 export default function SettingsPage() {
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -115,6 +116,7 @@ export default function SettingsPage() {
           View your public profile
         </Link>
       )}
+      {savedUsername && <DeleteAccount username={savedUsername} />}
     </main>
   );
 }
