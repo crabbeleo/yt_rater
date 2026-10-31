@@ -23,12 +23,14 @@ create table public.videos (
 );
 
 create table public.logs (
-  user_id uuid not null references public.profiles(id) on delete cascade,
+  user_id uuid not null,
   video_id text not null references public.videos(id),
   rating smallint not null check (rating between 1 and 5),
   review text not null default '',
   logged_at timestamptz not null default now(),
-  primary key (user_id, video_id)
+  primary key (user_id, video_id),
+  constraint logs_user_id_profiles_fkey
+    foreign key (user_id) references public.profiles(id) on delete cascade
 );
 
 create table public.follows (
