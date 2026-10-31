@@ -11,7 +11,7 @@ export default async function VideoPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  
+
   const { id } = await params;
 
   const video = await getVideoInfo(id);
@@ -20,7 +20,7 @@ export default async function VideoPage({
   return (
     <main className="min-h-screen flex flex-col items-center gap-4 p-8">
       {USE_STUB ? (
-        <div className="aspect-video w-full max-w-xl rounded-lg bg-gray-300" />
+        <div className="aspect-video w-full max-w-xl rounded-lg bg-surface" />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -30,7 +30,7 @@ export default async function VideoPage({
         />
       )}
       <h1 className="text-2xl font-bold text-center">{video.title}</h1>
-      <p className="text-gray-500">{video.author}</p>
+      <p className="text-muted">{video.author}</p>
       <LogForm id={id} />
       <VideoLogs videoId={id} />
     </main>

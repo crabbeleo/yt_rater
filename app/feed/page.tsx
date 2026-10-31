@@ -52,26 +52,26 @@ export default async function FeedPage() {
             </h1>
 
             {followingIds.length === 0 && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted">
                     You&apos;re not following anyone yet. Open a profile from here and
                     follow people to build your feed.
                 </p>
             )}
 
-            {error && <p className="text-red-500">{error.message}</p>}
+            {error && <p className="text-danger">{error.message}</p>}
 
             {!error && rows.length === 0 && (
-                <p className="text-gray-500">Nothing here yet.</p>
+                <p className="text-muted">Nothing here yet.</p>
             )}
 
             {rows.map((row) => (
                 <div
                     key={`${row.user_id}-${row.video_id}`}
-                    className="flex gap-4 rounded-lg border border-gray-400 p-3"
+                    className="flex gap-4 rounded-lg border border-line p-3"
                 >
                     <Link href={`/video/${row.video_id}`}>
                         {USE_STUB ? (
-                            <div className="aspect-video w-32 rounded bg-gray-300" />
+                            <div className="aspect-video w-32 rounded bg-surface" />
                         ) : (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -82,7 +82,7 @@ export default async function FeedPage() {
                         )}
                     </Link>
                     <div className="flex flex-col gap-1">
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-muted">
                             {row.profiles ? (
                                 <Link href={`/u/${row.profiles.username}`} className="underline">
                                     {row.profiles.display_name ?? row.profiles.username}
@@ -95,14 +95,14 @@ export default async function FeedPage() {
                         <Link href={`/video/${row.video_id}`} className="font-semibold">
                             {row.videos?.title ?? "Unknown video"}
                         </Link>
-                        <span className="text-yellow-400">
+                        <span className="text-accent">
                             {"★".repeat(row.rating)}
-                            <span className="text-gray-400">
+                            <span className="text-muted/60">
                                 {"★".repeat(5 - row.rating)}
                             </span>
                         </span>
                         {row.review && <p className="text-sm">{row.review}</p>}
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted">
                             {new Date(row.logged_at).toLocaleDateString()}
                         </span>
                     </div>

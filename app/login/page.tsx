@@ -69,7 +69,7 @@ export default function LoginPage() {
   }
 
   const inputClass =
-    "rounded-lg border border-gray-400 px-4 py-2 text-black";
+    "rounded-lg border border-line px-4 py-2 bg-surface text-foreground";
 
   return (
     <main className="mx-auto flex max-w-sm flex-1 flex-col justify-center gap-4 p-4 sm:p-8">
@@ -99,7 +99,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={busy}
-            className="rounded-lg bg-black px-4 py-2 text-white disabled:opacity-40"
+            className="rounded-lg bg-accent px-4 py-2 text-background disabled:opacity-40"
           >
             {busy ? "Signing in…" : "Sign in"}
           </button>
@@ -135,11 +135,11 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={busy}
-            className="rounded-lg bg-black px-4 py-2 text-white disabled:opacity-40"
+            className="rounded-lg bg-accent px-4 py-2 text-background disabled:opacity-40"
           >
             {busy ? "Creating…" : "Create account"}
           </button>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             By creating an account you agree that your username, logs and
             reviews are public. See the{" "}
             <Link href="/privacy" className="underline">
@@ -163,7 +163,7 @@ export default function LoginPage() {
           : "Already have an account? Sign in"}
       </button>
 
-      {message && <p className="text-red-500">{message}</p>}
+      {message && <p className="text-danger">{message}</p>}
     </main>
   );
 }

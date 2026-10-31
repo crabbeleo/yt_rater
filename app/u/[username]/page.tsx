@@ -78,8 +78,8 @@ export default async function ProfilePage({
                 <h1 className="text-3xl font-bold">
                     {profile.display_name ?? profile.username}
                 </h1>
-                <p className="text-gray-500">@{profile.username}</p>
-                <p className="text-sm text-gray-500">
+                <p className="text-muted">@{profile.username}</p>
+                <p className="text-sm text-muted">
                     {followers} {followers === 1 ? "follower" : "followers"} · {following}{" "}
                     following · {logs.length} {logs.length === 1 ? "log" : "logs"}
                 </p>
@@ -105,7 +105,7 @@ export default async function ProfilePage({
                 <Favourites slots={slots} isOwner={viewerId === profile.id} />
             )}
 
-            {logs.length === 0 && <p className="text-gray-500">Nothing logged yet.</p>}
+            {logs.length === 0 && <p className="text-muted">Nothing logged yet.</p>}
 
             {logs.map((log) => {
                 const video = log.videos as unknown as { title: string } | null;
@@ -113,10 +113,10 @@ export default async function ProfilePage({
                     <Link
                         key={log.video_id}
                         href={`/video/${log.video_id}`}
-                        className="flex gap-4 rounded-lg border border-gray-400 p-3"
+                        className="flex gap-4 rounded-lg border border-line p-3"
                     >
                         {USE_STUB ? (
-                            <div className="aspect-video w-32 rounded bg-gray-300" />
+                            <div className="aspect-video w-32 rounded bg-surface" />
                         ) : (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -129,14 +129,14 @@ export default async function ProfilePage({
                             <span className="font-semibold">
                                 {video?.title ?? "Unknown video"}
                             </span>
-                            <span className="text-yellow-400">
+                            <span className="text-accent">
                                 {"★".repeat(log.rating)}
-                                <span className="text-gray-400">
+                                <span className="text-muted/60">
                                     {"★".repeat(5 - log.rating)}
                                 </span>
                             </span>
                             {log.review && <p className="text-sm">{log.review}</p>}
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-muted">
                                 {new Date(log.logged_at).toLocaleDateString()}
                             </span>
                         </div>

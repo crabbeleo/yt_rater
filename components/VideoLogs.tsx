@@ -21,7 +21,7 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
         .order("logged_at", { ascending: false });
 
     if (error) {
-        return <p className="text-red-500">{error.message}</p>;
+        return <p className="text-danger">{error.message}</p>;
     }
 
     const rows = (data ?? []) as unknown as Row[];
@@ -36,8 +36,8 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
             </h2>
 
             {count > 0 && (
-                <p className="text-gray-500">
-                    <span className="text-yellow-400">★</span> {average.toFixed(1)}{" "}
+                <p className="text-muted">
+                    <span className="text-accent">★</span> {average.toFixed(1)}{" "}
                     average · {count} {count === 1 ? "log" : "logs"}
                 </p>
             )}
@@ -45,7 +45,7 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
             {rows.slice(0, 30).map((row) => (
                 <div
                     key={row.user_id}
-                    className="flex flex-col gap-1 rounded-lg border border-gray-400 p-3"
+                    className="flex flex-col gap-1 rounded-lg border border-line p-3"
                 >
                     <div className="flex items-center gap-2 text-sm">
                         {row.profiles ? (
@@ -55,11 +55,11 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
                         ) : (
                             <span>Someone</span>
                         )}
-                        <span className="text-yellow-400">
+                        <span className="text-accent">
                             {"★".repeat(row.rating)}
-                            <span className="text-gray-400">{"★".repeat(5 - row.rating)}</span>
+                            <span className="text-muted/60">{"★".repeat(5 - row.rating)}</span>
                         </span>
-                        <span className="ml-auto text-xs text-gray-500">
+                        <span className="ml-auto text-xs text-muted">
                             {new Date(row.logged_at).toLocaleDateString()}
                         </span>
                     </div>

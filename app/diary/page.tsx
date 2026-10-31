@@ -44,17 +44,17 @@ export default function DiaryPage() {
       )}
 
       {loaded && signedIn && logs.length === 0 && (
-        <p className="text-gray-500">Nothing logged yet.</p>
+        <p className="text-muted">Nothing logged yet.</p>
       )}
 
       {logs.map((log) => (
         <div
           key={log.id}
-          className="flex items-start gap-2 rounded-lg border border-gray-400 p-3"
+          className="flex items-start gap-2 rounded-lg border border-line p-3"
         >
           <Link href={`/video/${log.id}`} className="flex flex-1 gap-4">
             {USE_STUB ? (
-              <div className="aspect-video w-32 rounded bg-gray-300" />
+              <div className="aspect-video w-32 rounded bg-surface" />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -65,14 +65,14 @@ export default function DiaryPage() {
             )}
             <div className="flex flex-col gap-1">
               <span className="font-semibold">{log.title}</span>
-              <span className="text-yellow-400">
+              <span className="text-accent">
                 {"★".repeat(log.rating)}
-                <span className="text-gray-400">
+                <span className="text-muted/60">
                   {"★".repeat(5 - log.rating)}
                 </span>
               </span>
               {log.review && <p className="text-sm">{log.review}</p>}
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted">
                 {new Date(log.loggedAt).toLocaleDateString()}
               </span>
             </div>
@@ -80,7 +80,7 @@ export default function DiaryPage() {
           <button
             type="button"
             onClick={() => handleDelete(log.id)}
-            className="text-sm text-red-500"
+            className="text-sm text-danger"
           >
             Delete
           </button>

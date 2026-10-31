@@ -37,18 +37,18 @@ export default function Home() {
           value={link}
           onChange={(e) => setLink(e.target.value)}
           placeholder="Paste a YouTube link"
-          className="flex-1 rounded-lg border border-gray-400 px-4 py-2 text-black"
+          className="flex-1 rounded-lg border border-line px-4 py-2 bg-surface text-foreground"
         />
         <button
           type="submit"
-          className="rounded-lg bg-black px-4 py-2 text-white"
+          className="rounded-lg bg-accent px-4 py-2 text-background"
         >
           Log it
         </button>
       </form>
-      {error && <p className="text-red-500">{error}</p>}
-      <Link href="/diary" className="text-gray-500 underline">View diary</Link>
+      {error && <p className="text-danger">{error}</p>}
+      <Link href="/diary" className="text-muted underline">View diary</Link>
     </main>
-    
+
   );
 }

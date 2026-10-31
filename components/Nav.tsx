@@ -33,8 +33,8 @@ export default function Nav() {
   }
 
   return (
-    <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-gray-400 px-4 py-3 sm:px-8">
-      <Link href="/" className="font-bold">
+    <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-4 py-3 sm:px-8">
+      <Link href="/" className="font-bold uppercase tracking-widest text-accent">
         YT Log
       </Link>
       <Link href="/diary">Diary</Link>
@@ -43,7 +43,7 @@ export default function Nav() {
       <div className="ml-auto flex items-center gap-3 text-sm">
         {email ? (
           <>
-            <Link href="/settings" className="hidden text-gray-500 sm:inline">
+            <Link href="/settings" className="hidden text-muted sm:inline">
               {email}
             </Link>
             <Link href="/settings" className="sm:hidden">

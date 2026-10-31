@@ -48,7 +48,7 @@ export default function LogForm({ id }: { id: string }) {
   }
 
   if (signedIn === null) {
-    return <p className="text-gray-500">Loading…</p>;
+    return <p className="text-muted">Loading…</p>;
   }
 
   if (!signedIn) {
@@ -70,7 +70,7 @@ export default function LogForm({ id }: { id: string }) {
               setRating(n);
               setSaved(false);
             }}
-            className={n <= rating ? "text-yellow-400" : "text-gray-400"}
+            className={n <= rating ? "text-accent" : "text-muted/60"}
           >
             ★
           </button>
@@ -84,13 +84,13 @@ export default function LogForm({ id }: { id: string }) {
         }}
         placeholder="Add a review (optional)"
         rows={3}
-        className="rounded-lg border border-gray-400 px-4 py-2 text-black"
+        className="rounded-lg border border-line px-4 py-2 bg-surface text-foreground"
       />
       <button
         type="button"
         onClick={handleSave}
         disabled={rating === 0 || busy}
-        className="rounded-lg bg-black px-4 py-2 text-white disabled:opacity-40"
+        className="rounded-lg bg-accent px-4 py-2 text-background disabled:opacity-40"
       >
         {busy
           ? "Saving…"
@@ -100,7 +100,7 @@ export default function LogForm({ id }: { id: string }) {
               ? "Logged ✓"
               : "Log it"}
       </button>
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-danger">{error}</p>}
     </div>
   );
 }
