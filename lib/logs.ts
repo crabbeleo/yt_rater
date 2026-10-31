@@ -21,3 +21,9 @@ export function saveLog(log: Log): void {
   logs[log.id] = log;
   localStorage.setItem(KEY, JSON.stringify(logs));
 }
+
+export function deleteLog(id: string): void {
+  const logs = readLogs();
+  delete logs[id];
+  localStorage.setItem(KEY, JSON.stringify(logs));
+}

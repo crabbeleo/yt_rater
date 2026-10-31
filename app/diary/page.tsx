@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { readLogs, type Log } from "@/lib/logs";
+import { readLogs, deleteLog, type Log } from "@/lib/logs";
 import { USE_STUB } from "@/lib/video";
 
 export default function DiaryPage() {
@@ -16,6 +16,12 @@ export default function DiaryPage() {
     setLoaded(true);
   }, []);
 
+  function handleDelete(id: string) {
+    if (!window.confirm("Delete this log?")) return;
+    deleteLog(id);
+    setLogs((prev) => prev.filter((log) => log.id !== id));
+  }
+
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-4 p-8">
       <h1 className="text-3xl font-bold">Diary</h1>
@@ -25,12 +31,12 @@ export default function DiaryPage() {
       )}
 
       {logs.map((log) => (
-        <Link
+        <div
           key={log.id}
-          href={`/video/${log.id}`}
-          className="flex gap-4 rounded-lg border border-gray-400 p-3"
+          className="flex items-start gap-2 rounded-lg border border-gray-400 p-3"
         >
-          {USE_STUB ? (
+          <Link href={`/video/${log.id}`} className="flex flex-1 gap-4">
+            {USE_STUB ? (
               <div className="aspect-video w-32 rounded bg-gray-300" />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
@@ -40,20 +46,28 @@ export default function DiaryPage() {
                 className="w-32 rounded"
               />
             )}
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold">{log.title}</span>
-            <span className="text-yellow-400">
-              {"★".repeat(log.rating)}
-              <span className="text-gray-400">
-                {"★".repeat(5 - log.rating)}
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold">{log.title}</span>
+              <span className="text-yellow-400">
+                {"★".repeat(log.rating)}
+                <span className="text-gray-400">
+                  {"★".repeat(5 - log.rating)}
+                </span>
               </span>
-            </span>
-            {log.review && <p className="text-sm">{log.review}</p>}
-            <span className="text-xs text-gray-500">
-              {new Date(log.loggedAt).toLocaleDateString()}
-            </span>
-          </div>
-        </Link>
+              {log.review && <p className="text-sm">{log.review}</p>}
+              <span className="text-xs text-gray-500">
+                {new Date(log.loggedAt).toLocaleDateString()}
+              </span>
+            </div>
+          </Link>
+          <button
+            type="button"
+            onClick={() => handleDelete(log.id)}
+            className="text-sm text-red-500"
+          >
+            Delete
+          </button>
+        </div>
       ))}
     </main>
   );
