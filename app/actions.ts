@@ -66,3 +66,34 @@ export async function deleteAccount(): Promise<{ error?: string }> {
   await supabase.auth.signOut();
   return {};
 }
+
+export async function signIn(input: {
+  identifier: string;
+  password: string;
+}): Promise<{ error?: string }> {
+  const generic = "Invalid login credentials";
+  let email = input.identifier.trim();
+
+  // No "@" means it's a username: look up the email on the server only
+  if (!email.includes("@")) {
+    const admin = createAdminClient();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("username", email.toLowerCase())
+      .maybeSingle();
+    if (!profile) return { error: generic };
+
+    const { data, error } = await admin.auth.admin.getUserById(profile.id);
+    if (error || !data.user?.email) return { error: generic };
+    email = data.user.email;
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password: input.password,
+  });
+  if (error) return { error: error.message };
+  return {};
+}
