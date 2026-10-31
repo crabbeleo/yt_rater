@@ -39,6 +39,7 @@ export default function Nav() {
       </Link>
       <Link href="/diary">Diary</Link>
       <Link href="/feed">Feed</Link>
+      <Link href="/search">People</Link>
       <div className="ml-auto flex items-center gap-3 text-sm">
         {email ? (
           <>

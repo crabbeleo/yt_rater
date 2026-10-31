@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { USE_STUB } from "@/lib/video";
 import FollowButton from "@/components/FollowButton";
+import { connection } from "next/server";
 
 export const instant = false;
 
@@ -12,6 +13,7 @@ export default async function ProfilePage({
     params: Promise<{ username: string }>;
 }) {
     const { username } = await params;
+    await connection();
     const supabase = await createClient();
 
     const { data: profile } = await supabase

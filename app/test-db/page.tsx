@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
 import Link from "next/link";
+import { connection } from "next/server";
 
 export const instant = false;
 
 export default async function TestDb() {
+  await connection();
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const email = claimsData?.claims?.email;
