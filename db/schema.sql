@@ -193,3 +193,160 @@ create policy "authors and review owners delete comments"
 grant select on public.comments to anon, authenticated;
 grant insert, delete on public.comments to authenticated;
 grant all on public.comments to service_role;
+
+create function public.limit_comment_rate()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  if (
+    select count(*) from public.comments
+    where user_id = new.user_id
+      and created_at > now() - interval '1 minute'
+  ) >= 5 then
+    raise exception 'You are commenting too fast. Please wait a minute.';
+  end if;
+
+  if (
+    select count(*) from public.comments
+    where user_id = new.user_id
+      and created_at > now() - interval '1 day'
+  ) >= 100 then
+    raise exception 'Daily comment limit reached. Try again tomorrow.';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger comments_rate_limit
+  before insert on public.comments
+  for each row execute function public.limit_comment_rate();
+
+create table public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  recipient_id uuid not null,
+  actor_id uuid not null,
+  type text not null check (type in ('like', 'comment', 'reply', 'follow')),
+  log_user_id uuid,
+  log_video_id text,
+  read boolean not null default false,
+  created_at timestamptz not null default now(),
+  check (recipient_id <> actor_id),
+  constraint notifications_recipient_fkey
+    foreign key (recipient_id) references public.profiles(id) on delete cascade,
+  constraint notifications_actor_fkey
+    foreign key (actor_id) references public.profiles(id) on delete cascade,
+  -- Deleting a review removes the notifications about it
+  constraint notifications_log_fkey
+    foreign key (log_user_id, log_video_id)
+    references public.logs(user_id, video_id) on delete cascade
+);
+
+create index notifications_recipient_idx
+  on public.notifications (recipient_id, created_at desc);
+
+alter table public.notifications enable row level security;
+
+create policy "read own notifications"
+  on public.notifications for select
+  using ((select auth.uid()) = recipient_id);
+create policy "update own notifications"
+  on public.notifications for update
+  using ((select auth.uid()) = recipient_id)
+  with check ((select auth.uid()) = recipient_id);
+create policy "delete own notifications"
+  on public.notifications for delete
+  using ((select auth.uid()) = recipient_id);
+
+grant select, delete on public.notifications to authenticated;
+grant update (read) on public.notifications to authenticated;
+grant all on public.notifications to service_role;
+
+-- Someone likes your review (once per person per review, even if they unlike and re-like)
+create function public.notify_on_like()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  insert into public.notifications
+    (recipient_id, actor_id, type, log_user_id, log_video_id)
+  select new.log_user_id, new.user_id, 'like', new.log_user_id, new.log_video_id
+  where not exists (
+    select 1 from public.notifications n
+    where n.recipient_id = new.log_user_id
+      and n.actor_id = new.user_id
+      and n.type = 'like'
+      and n.log_user_id = new.log_user_id
+      and n.log_video_id = new.log_video_id
+  );
+  return new;
+end;
+$$;
+
+create trigger likes_notify
+  after insert on public.likes
+  for each row execute function public.notify_on_like();
+
+-- Someone comments on your review, or replies to your comment
+create function public.notify_on_comment()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  parent_author uuid;
+begin
+  if new.parent_id is not null then
+    select user_id into parent_author
+    from public.comments where id = new.parent_id;
+
+    if parent_author is not null and parent_author <> new.user_id then
+      insert into public.notifications
+        (recipient_id, actor_id, type, log_user_id, log_video_id)
+      values
+        (parent_author, new.user_id, 'reply', new.log_user_id, new.log_video_id);
+    end if;
+  end if;
+
+  -- The review's owner hears about it too, unless they were just notified as the parent
+  if new.log_user_id <> new.user_id
+     and new.log_user_id is distinct from parent_author then
+    insert into public.notifications
+      (recipient_id, actor_id, type, log_user_id, log_video_id)
+    values
+      (new.log_user_id, new.user_id, 'comment', new.log_user_id, new.log_video_id);
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger comments_notify
+  after insert on public.comments
+  for each row execute function public.notify_on_comment();
+
+-- Someone follows you (once per person, even if they unfollow and re-follow)
+create function public.notify_on_follow()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  insert into public.notifications (recipient_id, actor_id, type)
+  select new.following_id, new.follower_id, 'follow'
+  where not exists (
+    select 1 from public.notifications n
+    where n.recipient_id = new.following_id
+      and n.actor_id = new.follower_id
+      and n.type = 'follow'
+  );
+  return new;
+end;
+$$;
+
+create trigger follows_notify
+  after insert on public.follows
+  for each row execute function public.notify_on_follow();

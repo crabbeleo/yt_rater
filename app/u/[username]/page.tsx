@@ -6,6 +6,7 @@ import FollowButton from "@/components/FollowButton";
 import { connection } from "next/server";
 import Favourites, { type Slot } from "@/components/Favourites";
 import { escapeLike, isValidName } from "@/lib/username";
+import { commentLabel } from "@/lib/format";
 
 export const instant = false;
 
@@ -36,7 +37,7 @@ export default async function ProfilePage({
         await Promise.all([
             supabase
                 .from("logs")
-                .select("video_id, rating, review, logged_at, videos(title)")
+                .select("video_id, rating, review, logged_at, videos(title), comments(count)")
                 .eq("user_id", profile.id)
                 .order("logged_at", { ascending: false }),
             supabase
@@ -114,10 +115,12 @@ export default async function ProfilePage({
 
             {logs.map((log) => {
                 const video = log.videos as unknown as { title: string } | null;
+                const commentCount =
+                    (log.comments as unknown as { count: number }[] | null)?.[0]?.count ?? 0;
                 return (
                     <Link
                         key={log.video_id}
-                        href={`/video/${log.video_id}`}
+                        href={`/u/${encodeURIComponent(profile.username)}/${log.video_id}`}
                         className="flex gap-4 rounded-lg border border-line p-3"
                     >
                         {USE_STUB ? (
@@ -143,6 +146,7 @@ export default async function ProfilePage({
                             {log.review && <p className="text-sm">{log.review}</p>}
                             <span className="text-xs text-muted">
                                 {new Date(log.logged_at).toLocaleDateString()}
+                                {commentCount > 0 && <> · {commentLabel(commentCount)}</>}
                             </span>
                         </div>
                     </Link>

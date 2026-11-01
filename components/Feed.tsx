@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { USE_STUB } from "@/lib/video";
 import { getLikedSet, likeKey } from "@/lib/likes";
 import LikeButton from "@/components/LikeButton";
+import { commentLabel } from "@/lib/format";
 
 type Tab = "following" | "everyone";
 
@@ -16,6 +17,7 @@ type FeedRow = {
     videos: { title: string } | null;
     profiles: { username: string } | null;
     likes: { count: number }[];
+    comments: { count: number }[];
 };
 
 export default async function Feed({ tab }: { tab?: Tab }) {
@@ -45,7 +47,7 @@ export default async function Feed({ tab }: { tab?: Tab }) {
         let query = supabase
             .from("logs")
             .select(
-                "user_id, video_id, rating, review, logged_at, videos(title), profiles!logs_user_id_profiles_fkey(username), likes(count)"
+                "user_id, video_id, rating, review, logged_at, videos(title), profiles!logs_user_id_profiles_fkey(username), likes(count), comments(count)"
             )
             .order("logged_at", { ascending: false })
             .limit(30);
@@ -171,7 +173,7 @@ export default async function Feed({ tab }: { tab?: Tab }) {
                                     href={`/u/${encodeURIComponent(row.profiles.username)}/${row.video_id}`}
                                     className="underline"
                                 >
-                                    Comments
+                                    {commentLabel(row.comments?.[0]?.count ?? 0)}
                                 </Link>
                             )}
                         </div>

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getLikedSet, likeKey } from "@/lib/likes";
 import LikeButton from "@/components/LikeButton";
+import { commentLabel } from "@/lib/format";
 
 type Row = {
     user_id: string;
@@ -12,6 +13,7 @@ type Row = {
     logged_at: string;
     profiles: { username: string } | null;
     likes: { count: number }[];
+    comments: { count: number }[];
 };
 
 export default async function VideoLogs({ videoId }: { videoId: string }) {
@@ -24,7 +26,7 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
     const { data, error } = await supabase
         .from("logs")
         .select(
-            "user_id, video_id, rating, review, logged_at, videos(title), profiles!logs_user_id_profiles_fkey(username), likes(count)")
+            "user_id, video_id, rating, review, logged_at, videos(title), profiles!logs_user_id_profiles_fkey(username), likes(count), comments(count)")
         .eq("video_id", videoId)
         .order("logged_at", { ascending: false });
 
@@ -77,19 +79,25 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
                         </span>
                     </div>
                     {row.review && <p className="text-sm">{row.review}</p>}
-                    {row.review && (
-                        <div>
+                    <div className="flex items-center gap-3 text-xs text-muted">
+                        {row.review && (
                             <LikeButton
                                 viewerId={viewerId ?? null}
                                 authorId={row.user_id}
                                 videoId={row.video_id}
                                 initialCount={row.likes?.[0]?.count ?? 0}
-                                initiallyLiked={likedSet.has(
-                                    likeKey(row.user_id, row.video_id)
-                                )}
+                                initiallyLiked={likedSet.has(likeKey(row.user_id, row.video_id))}
                             />
-                        </div>
-                    )}
+                        )}
+                        {row.profiles && (
+                            <Link
+                                href={`/u/${encodeURIComponent(row.profiles.username)}/${row.video_id}`}
+                                className="underline"
+                            >
+                                {commentLabel(row.comments?.[0]?.count ?? 0)}
+                            </Link>
+                        )}
+                    </div>
                 </div>
             ))}
         </section>
