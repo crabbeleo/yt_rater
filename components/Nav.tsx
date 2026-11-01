@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import SettingsIcon from "./SettingsIcon";
 import SearchIcon from "./SearchIcon";
+import DiaryIcon from "./DiaryIcon";
+import NotificationIcon from "./NotificationIcon";
 
 export default function Nav() {
   const { userId, username } = useCurrentUser();
@@ -57,11 +59,11 @@ export default function Nav() {
       >
         YT Log
       </Link>
-      <Link href="/diary">Diary</Link>
+      <Link href="/diary"><DiaryIcon /></Link>
       <Link href="/search"><SearchIcon /></Link>
       {userId && (
-        <Link href="/notifications" className="inline-flex items-center gap-1">
-          Notifications
+        <Link href="/notifications" className="text-muted inline-flex items-center gap-1">
+          <NotificationIcon />
           {shownUnread > 0 && (
             <span className="rounded-full bg-accent px-1.5 text-xs font-semibold text-background">
               {shownUnread > 9 ? "9+" : shownUnread}
