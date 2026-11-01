@@ -6,9 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import SettingsIcon from "./SettingsIcon";
+import SearchIcon from "./SearchIcon";
 
 export default function Nav() {
-  const { userId, email, username } = useCurrentUser();
+  const { userId, username } = useCurrentUser();
   const [unread, setUnread] = useState<number>(0);
   const router = useRouter();
   const pathname = usePathname();
@@ -57,7 +58,7 @@ export default function Nav() {
         YT Log
       </Link>
       <Link href="/diary">Diary</Link>
-      <Link href="/search">Search</Link>
+      <Link href="/search"><SearchIcon /></Link>
       {userId && (
         <Link href="/notifications" className="inline-flex items-center gap-1">
           Notifications
