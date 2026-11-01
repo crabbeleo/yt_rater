@@ -52,7 +52,6 @@ export default function RatingInput({
       >
         <Stars rating={shown} />
       </div>
-      <span className="w-8 text-sm text-muted">{shown > 0 ? shown : ""}</span>
     </div>
   );
 }

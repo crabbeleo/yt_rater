@@ -25,8 +25,7 @@ create table public.videos (
 create table public.logs (
   user_id uuid not null,
   video_id text not null references public.videos(id),
-  rating smallint not null check (rating between 1 and 5),
-  review text not null default '',
+  rating numeric(2,1) not null check (rating between 0.5 and 5 and rating * 2 = floor(rating * 2)),  review text not null default '',
   logged_at timestamptz not null default now(),
   primary key (user_id, video_id),
   constraint logs_user_id_profiles_fkey
