@@ -5,6 +5,8 @@ import { getLikedSet, likeKey } from "@/lib/likes";
 import LikeButton from "@/components/LikeButton";
 import { commentLabel } from "@/lib/format";
 import Stars from "./Stars";
+import { PAGE_SIZE } from "@/lib/paging";
+import LoadMore from "@/components/LoadMore";
 
 type Row = {
     user_id: string;
@@ -17,7 +19,7 @@ type Row = {
     comments: { count: number }[];
 };
 
-export default async function VideoLogs({ videoId }: { videoId: string }) {
+export default async function VideoLogs({ videoId, limit = PAGE_SIZE }: { videoId: string; limit?: number }) {
     await connection();
     const supabase = await createClient();
 
@@ -55,7 +57,7 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
                 </p>
             )}
 
-            {rows.slice(0, 30).map((row) => (
+            {rows.slice(0, limit).map((row) => (
                 <div
                     key={row.user_id}
                     className="flex flex-col gap-1 rounded-lg border border-line p-3"
@@ -98,6 +100,9 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
                     </div>
                 </div>
             ))}
+            {rows.length > limit && (
+                <LoadMore href={`/video/${videoId}?limit=${limit + PAGE_SIZE}`} />
+            )}
         </section>
     );
 }

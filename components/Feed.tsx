@@ -5,6 +5,8 @@ import { USE_STUB } from "@/lib/video";
 import { getLikedSet, likeKey } from "@/lib/likes";
 import LikeButton from "@/components/LikeButton";
 import { commentLabel } from "@/lib/format";
+import { PAGE_SIZE } from "@/lib/paging";
+import LoadMore from "@/components/LoadMore";
 import Stars from "./Stars";
 
 type Tab = "following" | "everyone";
@@ -21,7 +23,13 @@ type FeedRow = {
     comments: { count: number }[];
 };
 
-export default async function Feed({ tab }: { tab?: Tab }) {
+export default async function Feed({
+    tab,
+    limit = PAGE_SIZE,
+}: {
+    tab?: Tab;
+    limit?: number;
+}) {
     await connection();
     const supabase = await createClient();
 
@@ -43,6 +51,7 @@ export default async function Feed({ tab }: { tab?: Tab }) {
 
     // Only load logs when there's something to show
     let rows: FeedRow[] = [];
+    let hasMore = false;
     let errorMessage = "";
     if (active === "everyone" || followingIds.length > 0) {
         let query = supabase
@@ -51,13 +60,15 @@ export default async function Feed({ tab }: { tab?: Tab }) {
                 "user_id, video_id, rating, review, logged_at, videos(title), profiles!logs_user_id_profiles_fkey(username), likes(count), comments(count)"
             )
             .order("logged_at", { ascending: false })
-            .limit(30);
+            .limit(limit + 1);
         if (active === "following") {
             query = query.in("user_id", followingIds);
         }
         const { data, error } = await query;
         if (error) errorMessage = error.message;
         rows = (data ?? []) as unknown as FeedRow[];
+        hasMore = rows.length > limit;
+        rows = rows.slice(0, limit);
     }
 
     const likedSet = await getLikedSet(supabase, viewerId, rows);
@@ -178,6 +189,7 @@ export default async function Feed({ tab }: { tab?: Tab }) {
                     </div>
                 </div>
             ))}
+            {hasMore && <LoadMore href={`/?tab=${active}&limit=${limit + PAGE_SIZE}`} />}
         </section>
     );
 }
