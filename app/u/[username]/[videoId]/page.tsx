@@ -7,6 +7,7 @@ import { escapeLike, isValidName } from "@/lib/username";
 import { getLikedSet, likeKey } from "@/lib/likes";
 import LikeButton from "@/components/LikeButton";
 import Comments, { type CommentItem } from "@/components/Comments";
+import Stars from "@/components/Stars";
 
 export const instant = false;
 
@@ -40,7 +41,7 @@ export default async function ReviewPage({
   let name = rawName;
   try {
     name = decodeURIComponent(rawName);
-  } catch {}
+  } catch { }
   if (!isValidName(name) || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) notFound();
 
   const supabase = await createClient();
@@ -115,10 +116,7 @@ export default async function ReviewPage({
           </Link>{" "}
           · {log.logged_at.slice(0, 10)}
         </p>
-        <span className="text-accent">
-          {"★".repeat(log.rating)}
-          <span className="text-muted/60">{"★".repeat(5 - log.rating)}</span>
-        </span>
+        <Stars rating={log.rating} />
         {log.review && <p className="whitespace-pre-wrap">{log.review}</p>}
         {log.review && (
           <div>

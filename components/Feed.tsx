@@ -5,6 +5,7 @@ import { USE_STUB } from "@/lib/video";
 import { getLikedSet, likeKey } from "@/lib/likes";
 import LikeButton from "@/components/LikeButton";
 import { commentLabel } from "@/lib/format";
+import Stars from "./Stars";
 
 type Tab = "following" | "everyone";
 
@@ -149,10 +150,7 @@ export default async function Feed({ tab }: { tab?: Tab }) {
                         <Link href={`/video/${row.video_id}`} className="font-semibold">
                             {row.videos?.title ?? "Unknown video"}
                         </Link>
-                        <span className="text-accent">
-                            {"★".repeat(row.rating)}
-                            <span className="text-muted/60">{"★".repeat(5 - row.rating)}</span>
-                        </span>
+                        <Stars rating={row.rating} />
                         {row.review && <p className="text-sm">{row.review}</p>}
                         <div className="flex items-center gap-3 text-xs text-muted">
                             <span>{new Date(row.logged_at).toLocaleDateString()}</span>

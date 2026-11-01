@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getLikedSet, likeKey } from "@/lib/likes";
 import LikeButton from "@/components/LikeButton";
 import { commentLabel } from "@/lib/format";
+import Stars from "./Stars";
 
 type Row = {
     user_id: string;
@@ -70,10 +71,7 @@ export default async function VideoLogs({ videoId }: { videoId: string }) {
                         ) : (
                             <span>Someone</span>
                         )}
-                        <span className="text-accent">
-                            {"★".repeat(row.rating)}
-                            <span className="text-muted/60">{"★".repeat(5 - row.rating)}</span>
-                        </span>
+                        <Stars rating={row.rating} />
                         <span className="ml-auto text-xs text-muted">
                             {new Date(row.logged_at).toLocaleDateString()}
                         </span>
