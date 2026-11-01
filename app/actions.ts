@@ -33,9 +33,10 @@ export async function logVideo(input: {
     return { error: "Invalid video ID." };
   }
   if (
-    !Number.isInteger(input.rating) ||
-    input.rating < 1 ||
-    input.rating > 5
+    !Number.isFinite(input.rating) ||
+    input.rating < 0.5 ||
+    input.rating > 5 ||
+    (input.rating * 2) % 1 !== 0
   ) {
     return { error: "Invalid rating." };
   }

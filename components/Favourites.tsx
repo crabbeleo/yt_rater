@@ -73,7 +73,7 @@ export default function Favourites({
                                 <Link
                                     href={`/video/${slot.videoId}`}
                                     title={slot.title}
-                                    className="block"
+                                    className="block transition-transform hover:-translate-y-0.5"
                                 >
                                     {USE_STUB ? (
                                         <div className="flex aspect-video items-center justify-center rounded bg-surface p-1 text-center text-[10px] leading-tight bg-surface text-foreground">
@@ -113,9 +113,9 @@ export default function Favourites({
                                 setError("");
                             }}
                             aria-label={`Add a video to slot ${position}`}
-                            className={`flex aspect-video items-center justify-center rounded border-2 border-dashed text-xl ${editing === position
-                                ? "border-accent bg-surface text-foreground"
-                                : "border-line text-muted/60"
+                            className={`flex aspect-video items-center justify-center rounded-lg border-2 border-dashed text-xl transition-colors hover:border-accent hover:text-accent ${editing === position
+                                    ? "border-accent text-accent"
+                                    : "border-line text-muted"
                                 }`}
                         >
                             +

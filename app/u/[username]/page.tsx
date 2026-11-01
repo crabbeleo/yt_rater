@@ -1,157 +1,55 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { USE_STUB } from "@/lib/video";
-import FollowButton from "@/components/FollowButton";
 import { connection } from "next/server";
-import Favourites, { type Slot } from "@/components/Favourites";
-import { escapeLike, isValidName } from "@/lib/username";
-import { commentLabel } from "@/lib/format";
+import LogLinkForm from "@/components/LogLinkForm";
+import Feed from "@/components/Feed";
+import { createClient } from "@/lib/supabase/server";
 
 export const instant = false;
 
-export default async function ProfilePage({
-    params,
+export default async function Home({
+  searchParams,
 }: {
-    params: Promise<{ username: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
-    const { username: rawName } = await params;
-    let name = rawName;
-    try {
-        name = decodeURIComponent(rawName);
-    } catch { }
-    if (!isValidName(name)) notFound();
-    await connection();
-    const supabase = await createClient();
+  await connection();
+  const { tab } = await searchParams;
 
-    const { data: profile, } = await supabase
-        .from("profiles")
-        .select("id, username")
-        .ilike("username", escapeLike(name))
-        .maybeSingle();
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const signedIn = Boolean(data?.claims?.sub);
 
-    const { data: claimsData } = await supabase.auth.getClaims();
-    const viewerId: string | undefined = claimsData?.claims?.sub;
+  return (
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 p-4 sm:p-8">
+      {!signedIn && (
+        <section className="flex flex-col gap-4 py-6">
+          <p className="font-[family-name:var(--font-display-src)] text-5xl font-bold uppercase leading-none tracking-wide sm:text-6xl">
+            Log what <span className="text-accent">you watch.</span>
+          </p>
+          <p className="max-w-md text-muted">
+            Rate and review YouTube videos, follow people, and see what they
+            are watching.
+          </p>
+          <div className="flex gap-3">
+            <Link
+              href="/login"
+              className="rounded-lg bg-accent px-4 py-2 font-semibold text-background"
+            >
+              Create account
+            </Link>
+            <Link
+              href="/search"
+              className="rounded-lg border border-line px-4 py-2 hover:border-accent"
+            >
+              Browse
+            </Link>
+          </div>
+        </section>
+      )}
 
-    const [logsRes, followersRes, followingRes, isFollowingRes, favRes] =
-        await Promise.all([
-            supabase
-                .from("logs")
-                .select("video_id, rating, review, logged_at, videos(title), comments(count)")
-                .eq("user_id", profile.id)
-                .order("logged_at", { ascending: false }),
-            supabase
-                .from("follows")
-                .select("*", { count: "exact", head: true })
-                .eq("following_id", profile.id),
-            supabase
-                .from("follows")
-                .select("*", { count: "exact", head: true })
-                .eq("follower_id", profile.id),
-            supabase
-                .from("favourites")
-                .select("position, video_id, videos(title)")
-                .eq("user_id", profile.id),
-            viewerId
-                ? supabase
-                    .from("follows")
-                    .select("follower_id")
-                    .eq("follower_id", viewerId)
-                    .eq("following_id", profile.id)
-                    .maybeSingle()
-                : Promise.resolve({ data: null }),
-        ]);
-
-    const logs = logsRes.data ?? [];
-    const followers = followersRes.count ?? 0;
-    const following = followingRes.count ?? 0;
-    const isFollowing = Boolean(isFollowingRes.data);
-    const favRows = (favRes.data ?? []) as unknown as {
-        position: number;
-        video_id: string;
-        videos: { title: string } | null;
-    }[];
-    const slots: (Slot | null)[] = [1, 2, 3, 4, 5].map((pos) => {
-        const row = favRows.find((r) => r.position === pos);
-        return row
-            ? { videoId: row.video_id, title: row.videos?.title ?? "Unknown video" }
-            : null;
-    });
-
-    return (
-        <main className="mx-auto flex max-w-xl flex-col gap-4 p-8">
-            <header className="flex flex-col gap-1">
-                <h1 className="text-3xl font-bold">
-                    {profile.username}
-                </h1>
-                <p className="text-muted">@{profile.username}</p>
-                <p className="text-sm text-muted">
-                    {followers} {followers === 1 ? "follower" : "followers"} · {following}{" "}
-                    following · {logs.length} {logs.length === 1 ? "log" : "logs"}
-                </p>
-                <div className="mt-2">
-                    {!viewerId ? (
-                        <Link href="/login" className="underline">
-                            Sign in to follow
-                        </Link>
-                    ) : viewerId === profile.id ? (
-                        <Link href="/settings" className="underline">
-                            Edit profile
-                        </Link>
-                    ) : (
-                        <FollowButton
-                            viewerId={viewerId}
-                            targetId={profile.id}
-                            initiallyFollowing={isFollowing}
-                        />
-                    )}
-                </div>
-            </header>
-            {(viewerId === profile.id || slots.some(Boolean)) && (
-                <Favourites slots={slots} isOwner={viewerId === profile.id} />
-            )}
-
-            {logs.length === 0 && <p className="text-muted">Nothing logged yet.</p>}
-
-            {logs.map((log) => {
-                const video = log.videos as unknown as { title: string } | null;
-                const commentCount =
-                    (log.comments as unknown as { count: number }[] | null)?.[0]?.count ?? 0;
-                return (
-                    <Link
-                        key={log.video_id}
-                        href={`/u/${encodeURIComponent(profile.username)}/${log.video_id}`}
-                        className="flex gap-4 rounded-lg border border-line p-3"
-                    >
-                        {USE_STUB ? (
-                            <div className="aspect-video w-32 rounded bg-surface" />
-                        ) : (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                                src={`https://i.ytimg.com/vi/${log.video_id}/mqdefault.jpg`}
-                                alt={video?.title ?? "Video"}
-                                className="w-32 rounded"
-                            />
-                        )}
-                        <div className="flex flex-col gap-1">
-                            <span className="font-semibold">
-                                {video?.title ?? "Unknown video"}
-                            </span>
-                            <span className="text-accent">
-                                {"★".repeat(log.rating)}
-                                <span className="text-muted/60">
-                                    {"★".repeat(5 - log.rating)}
-                                </span>
-                            </span>
-                            {log.review && <p className="text-sm">{log.review}</p>}
-                            <span className="text-xs text-muted">
-                                {new Date(log.logged_at).toLocaleDateString()}
-                                {commentCount > 0 && <> · {commentLabel(commentCount)}</>}
-                            </span>
-                        </div>
-                    </Link>
-                );
-            })}
-        </main>
-    );
+      <LogLinkForm />
+      <Feed
+        tab={tab === "everyone" || tab === "following" ? tab : undefined}
+      />
+    </main>
+  );
 }

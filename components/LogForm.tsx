@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { readLog } from "@/lib/logs";
 import { logVideo } from "@/app/actions";
 import { useRouter } from "next/navigation";
+import RatingInput from "./RatingInput";
 
 export default function LogForm({ id }: { id: string }) {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -61,21 +62,13 @@ export default function LogForm({ id }: { id: string }) {
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-3">
-      <div className="flex gap-1 text-3xl">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => {
-              setRating(n);
-              setSaved(false);
-            }}
-            className={n <= rating ? "text-accent" : "text-muted/60"}
-          >
-            ★
-          </button>
-        ))}
-      </div>
+      <RatingInput
+        value={rating}
+        onChange={(v) => {
+          setRating(v);
+          setSaved(false);
+        }}
+      />
       <textarea
         value={review}
         onChange={(e) => {

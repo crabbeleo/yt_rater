@@ -51,26 +51,36 @@ export default function Nav() {
   const shownName = username ?? "";
   const shownUnread = userId ? unread : 0;
 
+  const tone = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/")
+      ? "text-accent"
+      : "text-muted hover:text-foreground";
+
   return (
-    <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-4 py-3 sm:px-8">
+    <nav className="sticky top-0 z-20 flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-accent/30 bg-background/80 px-4 py-3 backdrop-blur sm:px-8">
       <Link
         href="/"
-        className="font-bold uppercase tracking-widest text-accent"
-      >
+        className="font-[family-name:var(--font-display-src)] text-2xl font-bold uppercase tracking-[0.2em] text-accent"      >
         YT Log
       </Link>
-      <Link href="/diary"><DiaryIcon /></Link>
-      <Link href="/search"><SearchIcon /></Link>
-      {userId && (
-        <Link href="/notifications" className="text-muted inline-flex items-center gap-1">
-          <NotificationIcon />
-          {shownUnread > 0 && (
-            <span className="rounded-full bg-accent px-1.5 text-xs font-semibold text-background">
-              {shownUnread > 9 ? "9+" : shownUnread}
-            </span>
-          )}
-        </Link>
-      )}
+      <Link href="/diary" aria-label="Diary" title="Diary" className={`flex ${tone("/diary")}`}>
+        <DiaryIcon />
+      </Link>
+      <Link href="/search" aria-label="Search" title="Search" className={`inline-flex items-center gap-1 ${tone("/search")}`} >
+        <SearchIcon />
+      </Link>
+      {
+        userId && (
+          <Link href="/notifications" aria-label="Notifications" title="Notifications" className={`inline-flex items-center gap-1 ${tone("/notifications")}`}>
+            <NotificationIcon />
+            {shownUnread > 0 && (
+              <span className="rounded-full bg-accent px-1.5 text-xs font-semibold text-background">
+                {shownUnread > 9 ? "9+" : shownUnread}
+              </span>
+            )}
+          </Link>
+        )
+      }
       <div className="ml-auto flex items-center gap-3 text-sm">
         {userId ? (
           <>
@@ -81,7 +91,7 @@ export default function Nav() {
               href="/settings"
               aria-label="Settings"
               title="Settings"
-              className="flex text-muted hover:text-foreground"
+              className={`flex ${tone("/settings")}`}
             >
               <SettingsIcon />
             </Link>
@@ -95,6 +105,6 @@ export default function Nav() {
           </Link>
         )}
       </div>
-    </nav>
+    </nav >
   );
 }
