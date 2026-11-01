@@ -4,32 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useCurrentUser } from "@/lib/useCurrentUser";
+import SettingsIcon from "./SettingsIcon";
 
 export default function Nav() {
-  const [email, setEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId, email, username } = useCurrentUser();
   const [unread, setUnread] = useState<number>(0);
   const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null);
-      setUserId(data.user?.id ?? null);
-    });
-
-    // Updates the nav whenever someone signs in or out
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setEmail(session?.user?.email ?? null);
-        setUserId(session?.user?.id ?? null);
-      }
-    );
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
 
   // Refresh the unread count when you sign in or move to another page
   useEffect(() => {
@@ -59,11 +41,11 @@ export default function Nav() {
 
   async function handleSignOut() {
     await createClient().auth.signOut();
-    setUnread(0);
     router.push("/");
     router.refresh();
   }
 
+  const shownName = username ?? "";
   const shownUnread = userId ? unread : 0;
 
   return (
@@ -76,7 +58,7 @@ export default function Nav() {
       </Link>
       <Link href="/diary">Diary</Link>
       <Link href="/search">Search</Link>
-      {email && (
+      {userId && (
         <Link href="/notifications" className="inline-flex items-center gap-1">
           Notifications
           {shownUnread > 0 && (
@@ -87,13 +69,18 @@ export default function Nav() {
         </Link>
       )}
       <div className="ml-auto flex items-center gap-3 text-sm">
-        {email ? (
+        {userId ? (
           <>
-            <Link href="/settings" className="hidden text-muted sm:inline">
-              {email}
-            </Link>
-            <Link href="/settings" className="sm:hidden">
-              Settings
+            {username && <Link href={`/u/${encodeURIComponent(username)}`} className="hidden text-muted sm:inline">
+              {shownName}
+            </Link>}
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              title="Settings"
+              className="flex text-muted hover:text-foreground"
+            >
+              <SettingsIcon />
             </Link>
             <button type="button" onClick={handleSignOut} className="underline">
               Sign out

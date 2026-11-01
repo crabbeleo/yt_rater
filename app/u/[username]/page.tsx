@@ -24,11 +24,11 @@ export default async function ProfilePage({
     await connection();
     const supabase = await createClient();
 
-    const { data: profile } = await supabase
+    const { data: profile, } = await supabase
         .from("profiles")
         .select("id, username")
+        .ilike("username", escapeLike(name))
         .maybeSingle();
-    if (!profile) notFound();
 
     const { data: claimsData } = await supabase.auth.getClaims();
     const viewerId: string | undefined = claimsData?.claims?.sub;
